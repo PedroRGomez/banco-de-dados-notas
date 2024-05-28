@@ -1,5 +1,3 @@
-import sqlite3
-
 def connect():
     return sqlite3.connect('escola.db')
 
@@ -56,14 +54,14 @@ def consultar_notas(conn, aluno_id):
         return conn.execute('SELECT * FROM nota WHERE aluno_id = ?', (aluno_id,)).fetchall()
 
 def inserir_dados_exemplo(conn):
-    # Inserindo dados para Pedro
+    # Pedro
     pedro_id = inserir_aluno(conn, 'Pedro')
     inserir_nota(conn, pedro_id, 'matemática', 10)
     inserir_nota(conn, pedro_id, 'geografia', 7)
     inserir_nota(conn, pedro_id, 'matemática', 7)
     inserir_nota(conn, pedro_id, 'geografia', 3)
     
-    # Inserindo dados para Isabella
+    # Isabella
     isabella_id = inserir_aluno(conn, 'Isabella')
     inserir_nota(conn, isabella_id, 'matemática', 6)
     inserir_nota(conn, isabella_id, 'geografia', 9)
@@ -76,8 +74,7 @@ def main():
     create_tables(conn)
     
     inserir_dados_exemplo(conn)
-    
-    # Consultando alunos e suas notas
+
     alunos = consultar_alunos(conn)
     print("Alunos e suas notas:")
     for aluno in alunos:
@@ -85,9 +82,14 @@ def main():
         notas = consultar_notas(conn, aluno_id)
         print(f"Aluno: {nome}")
         for nota in notas:
-            _, _, disciplina, nota_valor = nota
-            print(f"  Disciplina: {disciplina}, Nota: {nota_valor}")
+            nota_id, _, disciplina, nota_valor = nota
+            print(f"  Nota ID: {nota_id}, Disciplina: {disciplina}, Nota: {nota_valor}")
 
+    # Excluindo todos os dados do banco de dados após a impressão
+    with conn:
+        conn.execute('DELETE FROM aluno')
+        conn.execute('DELETE FROM nota')
+    
     conn.close()
 
 if __name__ == '__main__':
