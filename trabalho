@@ -1,0 +1,94 @@
+import sqlite3
+
+def connect():
+    return sqlite3.connect('escola.db')
+
+def create_tables(conn):
+    with conn:
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS aluno (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nome TEXT NOT NULL
+            )
+        ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS nota (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                aluno_id INTEGER,
+                disciplina TEXT NOT NULL,
+                nota REAL NOT NULL,
+                FOREIGN KEY(aluno_id) REFERENCES aluno(id)
+            )
+        ''')
+
+def inserir_aluno(conn, nome):
+    with conn:
+        conn.execute('INSERT INTO aluno (nome) VALUES (?)', (nome,))
+        return conn.execute('SELECT id FROM aluno WHERE nome = ?', (nome,)).fetchone()[0]
+
+def inserir_nota(conn, aluno_id, disciplina, nota):
+    with conn:
+        conn.execute('INSERT INTO nota (aluno_id, disciplina, nota) VALUES (?, ?, ?)', (aluno_id, disciplina, nota))
+
+def excluir_aluno(conn, aluno_id):
+    with conn:
+        conn.execute('DELETE FROM aluno WHERE id = ?', (aluno_id,))
+        conn.execute('DELETE FROM nota WHERE aluno_id = ?', (aluno_id,))
+
+def excluir_nota(conn, nota_id):
+    with conn:
+        conn.execute('DELETE FROM nota WHERE id = ?', (nota_id,))
+
+def modificar_aluno(conn, aluno_id, novo_nome):
+    with conn:
+        conn.execute('UPDATE aluno SET nome = ? WHERE id = ?', (novo_nome, aluno_id))
+
+def modificar_nota(conn, nota_id, nova_disciplina, nova_nota):
+    with conn:
+        conn.execute('UPDATE nota SET disciplina = ?, nota = ? WHERE id = ?', (nova_disciplina, nova_nota, nota_id))
+
+def consultar_alunos(conn):
+    with conn:
+        return conn.execute('SELECT * FROM aluno').fetchall()
+
+def consultar_notas(conn, aluno_id):
+    with conn:
+        return conn.execute('SELECT * FROM nota WHERE aluno_id = ?', (aluno_id,)).fetchall()
+
+def inserir_dados_exemplo(conn):
+    # Inserindo dados para Pedro
+    pedro_id = inserir_aluno(conn, 'Pedro')
+    inserir_nota(conn, pedro_id, 'matemática', 10)
+    inserir_nota(conn, pedro_id, 'geografia', 7)
+    inserir_nota(conn, pedro_id, 'matemática', 7)
+    inserir_nota(conn, pedro_id, 'geografia', 3)
+    
+    # Inserindo dados para Isabella
+    isabella_id = inserir_aluno(conn, 'Isabella')
+    inserir_nota(conn, isabella_id, 'matemática', 6)
+    inserir_nota(conn, isabella_id, 'geografia', 9)
+    inserir_nota(conn, isabella_id, 'matemática', 10)
+    inserir_nota(conn, isabella_id, 'geografia', 5)
+
+# Teste
+def main():
+    conn = connect()
+    create_tables(conn)
+    
+    inserir_dados_exemplo(conn)
+    
+    # Consultando alunos e suas notas
+    alunos = consultar_alunos(conn)
+    print("Alunos e suas notas:")
+    for aluno in alunos:
+        aluno_id, nome = aluno
+        notas = consultar_notas(conn, aluno_id)
+        print(f"Aluno: {nome}")
+        for nota in notas:
+            _, _, disciplina, nota_valor = nota
+            print(f"  Disciplina: {disciplina}, Nota: {nota_valor}")
+
+    conn.close()
+
+if __name__ == '__main__':
+    main()
